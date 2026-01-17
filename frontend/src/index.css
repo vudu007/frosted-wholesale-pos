@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Raleway:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-frosted-dark antialiased font-body;
+  }
+  body.dark {
+    @apply bg-slate-950 text-slate-100;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  /* Frosted Wholesale Button Styles */
+  .btn-frosted {
+    @apply inline-block px-6 py-3 bg-white text-frosted-purple rounded-full font-semibold
+           transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl;
+  }
+  
+  .btn-frosted-primary {
+    @apply inline-block px-8 py-4 bg-gradient-frosted text-white rounded-full font-bold text-lg
+           transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-2xl;
+  }
+  
+  .btn-frosted-secondary {
+    @apply inline-block px-6 py-3 bg-white text-frosted-purple border-2 border-frosted-purple rounded-full font-semibold
+           transition-all duration-300 hover:bg-frosted-purple hover:text-white hover:transform hover:-translate-y-1;
+  }
+  
+  /* Product Card Styles */
+  .product-card {
+    @apply relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 
+           overflow-hidden transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] 
+           hover:border-primary-300 dark:hover:border-primary-700 cursor-pointer;
+  }
+  
+  .product-card-image {
+    @apply aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-110;
+  }
+  
+  /* Frosted Card */
+  .frosted-card {
+    @apply bg-white rounded-xl overflow-hidden shadow-card transition-all duration-300
+           hover:shadow-card-hover hover:transform hover:-translate-y-2;
+  }
+  
+  .frosted-card-image {
+    @apply w-full h-48 object-cover;
+  }
+  
+  .frosted-card-content {
+    @apply p-6;
+  }
+  
+  /* Section Title */
+  .section-title {
+    @apply text-center mb-12 relative;
+  }
+  
+  .section-title::after {
+    content: "";
+    @apply block w-16 h-1 bg-secondary mx-auto mt-2 rounded-full;
+  }
+  
+  /* Input Styles */
+  .input-frosted {
+    @apply w-full px-4 py-3 bg-white border border-slate-300 rounded-xl
+           focus:outline-none focus:ring-2 focus:ring-frosted-purple focus:border-transparent
+           transition-all duration-200;
+  }
+  
+  /* Feature Item */
+  .feature-item {
+    @apply text-center p-8;
+  }
+  
+  .feature-icon {
+    @apply text-5xl text-frosted-purple mb-4;
+  }
+  
+  /* Category Pill */
+  .category-pill {
+    @apply px-6 py-2.5 rounded-full font-semibold text-sm whitespace-nowrap transition-all duration-200
+           hover:scale-105 active:scale-95;
+  }
+  
+  .category-pill-active {
+    @apply bg-frosted-purple text-white shadow-lg;
+  }
+  
+  .category-pill-inactive {
+    @apply bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 
+           hover:bg-slate-200 dark:hover:bg-slate-700;
+  }
+}
+
+@layer utilities {
+  /* Hero Gradient */
+  .hero-gradient {
+    @apply bg-gradient-frosted text-white;
+  }
+  
+  /* Scrollbar Styles */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-slate-600;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Text Shadow */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  /* Backdrop Blur */
+  .backdrop-blur-glass {
+    @apply backdrop-blur-md bg-white/80 dark:bg-slate-900/80;
+  }
+}
+
+/* Loading Spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  @apply inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin;
+}

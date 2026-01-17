@@ -1,0 +1,27 @@
+ENTERPRISE POS - REQUIRED SOFTWARE LIST
+======================================
+
+To run this application locally, you need the following software installed on your Windows machine:
+
+1. Node.js (LTS Version 18.x or higher)
+   - Purpose: Runs the Backend (NestJS) and Frontend (Vite/React) development servers.
+   - Download: https://nodejs.org/
+
+2. PostgreSQL (Version 14 or higher)
+   - Purpose: The primary database for storing transactions, inventory, and users.
+   - Download: https://www.postgresql.org/download/windows/
+
+3. Git (Optional but recommended)
+   - Purpose: For version control and cloning the repository.
+   - Download: https://git-scm.com/download/win
+
+4. VS Code (Optional but recommended)
+   - Purpose: For code editing and debugging.
+   - Download: https://code.visualstudio.com/
+
+Setup Instructions:
+------------------
+1. Install Node.js and verify by running `node -v` in PowerShell.
+2. Install PostgreSQL. During installation, set a password for the 'postgres' user.
+3. Ensure the 'bin' folder of PostgreSQL is added to your System PATH (usually C:\Program Files\PostgreSQL\16\bin).
+4. Run the 'setup-environment.bat' script to automate the rest of the configuration.

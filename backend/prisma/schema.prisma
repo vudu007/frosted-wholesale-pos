@@ -1,0 +1,324 @@
+// This is the complete and final schema for your application.
+// All models and enums are defined before they are used.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS (Define first as they are used by models) ---
+
+enum Role {
+  ADMIN
+  MANAGER
+  CASHIER
+}
+
+enum DiscountType {
+  FIXED
+  PERCENTAGE
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+  FLAGGED
+}
+
+enum OrderType {
+  IN_STORE
+  ONLINE
+  CURBSIDE
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+// --- CORE MODELS (That don't depend on many others) ---
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  location  String
+  users     User[]
+  products  ProductInventory[]
+  materials RawMaterialInventory[]
+  sales     Sale[]
+  shifts    CashShift[]
+  adjustments InventoryAdjustment[]
+  customers Customer[]
+  emailReportConfigs EmailReportConfig[]
+  allocations MaterialAllocation[]
+}
+
+model User {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  password  String
+  role      Role      @default(CASHIER)
+  storeId   String?
+  store     Store?    @relation(fields: [storeId], references: [id])
+  shifts    CashShift[]
+  audits    AuditLog[]
+  createdAt DateTime  @default(now()) 
+  adjustmentsRecorded InventoryAdjustment[]
+  passwordResetToken  String?
+  passwordResetExpires DateTime?
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  group       String?
+  image       String?
+  price       Decimal
+  costPrice   Decimal  @default(0)
+  sku         String   @unique
+  barcode     String?
+  size        String?
+  isTaxable   Boolean  @default(true)
+  isComposite Boolean  @default(false)
+  inventory   ProductInventory[]
+  recipe      RecipeItem[]
+  saleItems   SaleItem[]
+}
+
+model RawMaterial {
+  id          String   @id @default(uuid())
+  name        String
+  unit        String
+  image       String?
+  inventory   RawMaterialInventory[]
+  usedIn      RecipeItem[]
+  adjustments InventoryAdjustment[]
+  allocations MaterialAllocation[]
+}
+
+model MaterialAllocation {
+  id            String      @id @default(uuid())
+  materialId    String
+  material      RawMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  storeId       String
+  store         Store       @relation(fields: [storeId], references: [id])
+  quantity      Decimal
+  reason        String?     // e.g., "Production of Burger Buns"
+  allocatedAt   DateTime    @default(now())
+}
+
+// --- DEPENDENT MODELS (These link other models together) ---
+
+model ProductInventory {
+  id        String  @id @default(uuid())
+  storeId   String
+  store     Store   @relation(fields: [storeId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stock     Int     @default(0)
+  @@unique([storeId, productId])
+}
+
+model RawMaterialInventory {
+  id         String      @id @default(uuid())
+  storeId    String
+  store      Store       @relation(fields: [storeId], references: [id])
+  materialId String
+  material   RawMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  stock      Decimal     @default(0.00)
+  @@unique([storeId, materialId])
+}
+
+model RecipeItem {
+  id            String      @id @default(uuid())
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  materialId    String
+  material      RawMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  qtyRequired   Decimal
+}
+
+model Sale {
+  id          String     @id @default(uuid())
+  storeId     String
+  store       Store      @relation(fields: [storeId], references: [id])
+  customerId  String?
+  customer    Customer?  @relation(fields: [customerId], references: [id])
+  createdAt   DateTime   @default(now())
+  items       SaleItem[]
+  subtotal        Decimal
+  discountType    DiscountType?
+  discountAmount  Decimal?
+  taxAmount       Decimal
+  grandTotal      Decimal
+  payments        Payment[]
+  orderType       OrderType     @default(IN_STORE)
+  status          OrderStatus   @default(COMPLETED)
+  tableNumber     String?
+  // New fields for guest checkout and payment terms
+  isGuestOrder    Boolean       @default(false)
+  paymentTerms    String?       // e.g., "IMMEDIATE", "1_WEEK", "2_WEEKS"
+  paymentDueDate  DateTime?     // When payment is due for credit orders
+}
+
+model SaleItem {
+  id        String  @id @default(uuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  qty       Int
+  price     Decimal
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  paymentType String
+  amount      Decimal
+  createdAt   DateTime @default(now())
+}
+
+model CashShift {
+  id            String    @id @default(uuid())
+  storeId       String
+  store         Store     @relation(fields: [storeId], references: [id])
+  cashierId     String
+  cashier       User      @relation(fields: [cashierId], references: [id])
+  startTime     DateTime  @default(now())
+  endTime       DateTime?
+  startCash     Decimal
+  systemCash    Decimal?
+  actualCash    Decimal?
+  variance      Decimal?
+  status        ShiftStatus @default(OPEN)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model InventoryAdjustment {
+  id              String    @id @default(uuid())
+  materialId      String
+  material        RawMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  storeId         String
+  store           Store     @relation(fields: [storeId], references: [id])
+  quantity        Decimal
+  reason          String
+  createdAt       DateTime  @default(now())
+  recordedById    String
+  recordedBy      User      @relation(fields: [recordedById], references: [id])
+}
+
+// --- NEW: CUSTOMER ENUM AND MODEL ---
+enum CustomerTier {
+  STANDARD
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+model Customer {
+  id          String        @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String?       @unique
+  phone       String?       @unique
+  address     String?
+  password    String?       // Optional password for customer accounts
+  tier        CustomerTier  @default(STANDARD)
+  loyaltyPoints Int        @default(0)
+  totalSpent  Decimal       @default(0.00)
+  storeId     String
+  store       Store         @relation(fields: [storeId], references: [id])
+  sales       Sale[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  passwordResetToken  String?
+  passwordResetExpires DateTime?
+}
+
+// --- NEW: MODEL FOR BUSINESS SETTINGS ---
+// We use a fixed ID to ensure there is only ever one row of settings.
+model Setting {
+  id              Int     @id @default(1)
+  businessName    String? @default("EmmyPos")
+  businessAddress String?
+  logoUrl         String?
+  reportEmail     String?
+  // SMTP Settings for Universal Email
+  emailHost       String?
+  emailPort       Int?
+  emailUser       String?
+  emailPass       String?
+  emailSecure     Boolean @default(false)
+  currency        String? @default("₦")
+}
+
+// --- EMAIL REPORTING MODELS ---
+enum ReportFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum ReportFormat {
+  PDF
+  CSV
+  HTML
+}
+
+model EmailReportConfig {
+  id              String          @id @default(uuid())
+  storeId         String
+  store           Store           @relation(fields: [storeId], references: [id])
+  frequency       ReportFrequency
+  format          ReportFormat
+  includeMetrics  Boolean         @default(true)
+  includeSalesTrend Boolean       @default(true)
+  includeGeography Boolean        @default(true)
+  includeTopProducts Boolean      @default(true)
+  recipients      EmailReportRecipient[]
+  executionLogs   ReportExecutionLog[]
+  isActive        Boolean         @default(true)
+  lastSent        DateTime?
+  nextSend        DateTime        @default(now())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model EmailReportRecipient {
+  id        String  @id @default(uuid())
+  configId  String
+  config    EmailReportConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  email     String
+  name      String?
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+}
+
+model ReportExecutionLog {
+  id          String      @id @default(uuid())
+  configId    String
+  config      EmailReportConfig @relation(fields: [configId], references: [id])
+  status      String      // SUCCESS, FAILED
+  format      ReportFormat
+  error       String?
+  sentAt      DateTime    @default(now())
+  recipients  String[]    // List of recipient emails
+  duration    Int?
+}
